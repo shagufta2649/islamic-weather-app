@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Islamic Weather & Prayer Times</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .city-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            animation: fadeIn 1.2s ease-out;
+        }
+
+        select {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        select:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        select option {
+            background: #667eea;
+            color: white;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .weather-card, .prayer-card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+            animation: slideInLeft 1s ease-out;
+        }
+
+        .weather-card:hover, .prayer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .prayer-card {
+            animation: slideInRight 1s ease-out;
+        }
+
+        .weather-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            display: block;
+            animation: bounce 2s infinite;
+        }
+
+        .temp {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .weather-desc {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .detail-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        .prayer-times {
+            display: grid;
+            gap: 15px;
+        }
+
+        .prayer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .prayer-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .prayer-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .prayer-time {
+            font-size: 1.1rem;
+            color: #ffd700;
+        }
+
+        .qibla-section {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            animation: fadeInUp 1.5s ease-out;
+            margin-bottom: 30px;
+        }
+
+        .qibla-compass {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            position: relative;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .qibla-needle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 80px;
+            background: linear-gradient(to top, #ff6b6b, #ffd700);
+            transform-origin: bottom center;
+            transform: translate(-50%, -100%);
+            border-radius: 2px;
+            animation: rotate 3s ease-in-out infinite alternate;
+        }
+
+        .compass-directions {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .next-prayer {
+            background: rgba(255,215,0,0.2);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            margin: 20px auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes rotate {
+            0% { transform: translate(-50%, -100%) rotate(0deg); }
+            100% { transform: translate(-50%, -100%) rotate(10deg); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌙 Islamic Weather & Prayer Times</h1>
+            <p>Weather forecast with complete Islamic prayer schedule</p>
+        </div>
+
+        <div class="city-selector">
+            <select id="citySelect">
+                <option value="Mecca,SA">🕋 Mecca, Saudi Arabia</option>
+                <option value="Medina,SA">🕌 Medina, Saudi Arabia</option>
+                <option value="Istanbul,TR">🌉 Istanbul, Turkey</option>
+                <option value="Cairo,EG">🏛️ Cairo, Egypt</option>
+                <option value="Dubai,AE">🏙️ Dubai, UAE</option>
+                <option value="Karachi,PK">🏢 Karachi, Pakistan</option>
+                <option value="Jakarta,ID">🌴 Jakarta, Indonesia</option>
+                <option value="Kuala Lumpur,MY">🏗️ Kuala Lumpur, Malaysia</option>
+                <option value="London,UK">🎡 London, UK</option>
+                <option value="New York,US">🗽 New York, USA</option>
+                <option value="Delhi,IN">🏛️ Delhi, India</option>
+                <option value="Dhaka,BD">🏙️ Dhaka, Bangladesh</option>
+                <option value="Tehran,IR">🏔️ Tehran, Iran</option>
+                <option value="Baghdad,IQ">🏛️ Baghdad, Iraq</option>
+                <option value="Lahore,PK">🏛️ Lahore, Pakistan</option>
+            </select>
+        </div>
+
+        <div id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                Loading weather and prayer times...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class IslamicWeatherApp {
+            constructor() {
+                this.selectedCity = 'Mecca,SA';
+                this.weatherData = null;
+                this.prayerTimes = null;
+                this.qiblaDirection = null;
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.loadData();
+                this.startTimeUpdates();
+            }
+
+            bindEvents() {
+                document.getElementById('citySelect').addEventListener('change', (e) => {
+                    this.selectedCity = e.target.value;
+                    this.loadData();
+                });
+            }
+
+            async loadData() {
+                document.getElementById('content').innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading weather and prayer times...
+                    </div>
+                `;
+
+                try {
+                    await Promise.all([
+                        this.loadWeatherData(),
+                        this.loadPrayerTimes(),
+                        this.calculateQibla()
+                    ]);
+                    this.renderApp();
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    this.showError();
+                }
+            }
+
+            async loadWeatherData() {
+                // Simulated weather data - in real app, you'd use OpenWeatherMap API
+                const weatherTemplates = {
+                    'Mecca,SA': { temp: 42, desc: 'Hot and Sunny', icon: '☀️', humidity: 25, wind: 8, pressure: 1013 },
+                    'Medina,SA': { temp: 39, desc: 'Clear Sky', icon: '☀️', humidity: 28, wind: 12, pressure: 1015 },
+                    'Istanbul,TR': { temp: 22, desc: 'Partly Cloudy', icon: '⛅', humidity: 65, wind: 15, pressure: 1018 },
+                    'Cairo,EG': { temp: 35, desc: 'Sunny', icon: '☀️', humidity: 35, wind: 10, pressure: 1012 },
+                    'Dubai,AE': { temp: 38, desc: 'Hot', icon: '🌤️', humidity: 45, wind: 18, pressure: 1010 },
+                    'Karachi,PK': { temp: 32, desc: 'Humid', icon: '🌫️', humidity: 75, wind: 20, pressure: 1008 },
+                    'Jakarta,ID': { temp: 28, desc: 'Tropical', icon: '🌦️', humidity: 85, wind: 12, pressure: 1009 },
+                    'Kuala Lumpur,MY': { temp: 30, desc: 'Thunderstorms', icon: '⛈️', humidity: 80, wind: 8, pressure: 1005 },
+                    'London,UK': { temp: 15, desc: 'Rainy', icon: '🌧️', humidity: 85, wind: 25, pressure: 1020 },
+                    'New York,US': { temp: 25, desc: 'Cloudy', icon: '☁️', humidity: 60, wind: 22, pressure: 1016 },
+                    'Delhi,IN': { temp: 40, desc: 'Very Hot', icon: '🔥', humidity: 40, wind: 8, pressure: 1008 },
+                    'Dhaka,BD': { temp: 35, desc: 'Monsoon', icon: '🌧️', humidity: 90, wind: 15, pressure: 1006 },
+                    'Tehran,IR': { temp: 28, desc: 'Clear', icon: '☀️', humidity: 30, wind: 10, pressure: 1020 },
+                    'Baghdad,IQ': { temp: 45, desc: 'Very Hot', icon: '🔥', humidity: 20, wind: 12, pressure: 1010 },
+                    'Lahore,PK': { temp: 38, desc: 'Hot and Dry', icon: '☀️', humidity: 35, wind: 8, pressure: 1012 }
+                };
+
+                this.weatherData = weatherTemplates[this.selectedCity] || weatherTemplates['Mecca,SA'];
+            }
+
+            async loadPrayerTimes() {
+                // Simulated prayer times - in real app, you'd use Islamic prayer times API
+                const prayerTemplates = {
+                    'Mecca,SA': { fajr: '04:30', sunrise: '06:00', dhuhr: '12:15', asr: '15:45', maghrib: '18:30', isha: '20:00' },
+                    'Medina,SA': { fajr: '04:35', sunrise: '06:05', dhuhr: '12:20', asr: '15:50', maghrib: '18:35', isha: '20:05' },
+                    'Istanbul,TR': { fajr: '04:15', sunrise: '05:45', dhuhr: '13:00', asr: '16:30', maghrib: '19:45', isha: '21:15' },
+                    'Cairo,EG': { fajr: '04:00', sunrise: '05:30', dhuhr: '12:45', asr: '16:15', maghrib: '19:00', isha: '20:30' },
+                    'Dubai,AE': { fajr: '04:45', sunrise: '06:15', dhuhr: '12:30', asr: '16:00', maghrib: '18:45', isha: '20:15' },
+                    'Karachi,PK': { fajr: '04:30', sunrise: '06:00', dhuhr: '12:45', asr: '16:30', maghrib: '19:15', isha: '20:45' },
+                    'Jakarta,ID': { fajr: '04:20', sunrise: '05:50', dhuhr: '12:00', asr: '15:30', maghrib: '18:15', isha: '19:30' },
+                    'Kuala Lumpur,MY': { fajr: '05:45', sunrise: '07:15', dhuhr: '13:20', asr: '16:40', maghrib: '19:25', isha: '20:40' },
+                    'London,UK': { fajr: '02:30', sunrise: '04:45', dhuhr: '13:15', asr: '17:30', maghrib: '21:00', isha: '23:00' },
+                    'New York,US': { fajr: '04:15', sunrise: '05:45', dhuhr: '12:30', asr: '16:15', maghrib: '19:45', isha: '21:15' },
+                    'Delhi,IN': { fajr: '04:20', sunrise: '05:50', dhuhr: '12:30', asr: '16:15', maghrib: '19:00', isha: '20:30' },
+                    'Dhaka,BD': { fajr: '04:15', sunrise: '05:45', dhuhr: '12:00', asr: '15:45', maghrib: '18:30', isha: '19:45' },
+                    'Tehran,IR': { fajr: '04:45', sunrise: '06:15', dhuhr: '13:00', asr: '16:45', maghrib: '20:00', isha: '21:30' },
+                    'Baghdad,IQ': { fajr: '04:30', sunrise: '06:00', dhuhr: '12:45', asr: '16:30', maghrib: '19:15', isha: '20:45' },
+                    'Lahore,PK': { fajr: '04:25', sunrise: '05:55', dhuhr: '12:40', asr: '16:25', maghrib: '19:10', isha: '20:40' }
+                };
+
+                this.prayerTimes = prayerTemplates[this.selectedCity] || prayerTemplates['Mecca,SA'];
+            }
+
+            calculateQibla() {
+                // Simulated Qibla directions - in real app, you'd calculate based on coordinates
+                const qiblaDirections = {
+                    'Mecca,SA': 0,
+                    'Medina,SA': 195,
+                    'Istanbul,TR': 145,
+                    'Cairo,EG': 135,
+                    'Dubai,AE': 295,
+                    'Karachi,PK': 255,
+                    'Jakarta,ID': 295,
+                    'Kuala Lumpur,MY': 295,
+                    'London,UK': 118,
+                    'New York,US': 58,
+                    'Delhi,IN': 255,
+                    'Dhaka,BD': 260,
+                    'Tehran,IR': 215,
+                    'Baghdad,IQ': 165,
+                    'Lahore,PK': 255
+                };
+
+                this.qiblaDirection = qiblaDirections[this.selectedCity] || 0;
+            }
+
+            renderApp() {
+                const cityName = this.selectedCity.split(',')[0];
+                const nextPrayer = this.getNextPrayer();
+                
+                document.getElementById('content').innerHTML = `
+                    <div class="main-grid">
+                        <div class="weather-card">
+                            <div class="weather-icon">${this.weatherData.icon}</div>
+                            <div class="temp">${this.weatherData.temp}°C</div>
+                            <div class="weather-desc">${this.weatherData.desc}</div>
+                            <div class="weather-details">
+                                <div class="detail-item">
+                                    <div>💧 Humidity</div>
+                                    <div>${this.weatherData.humidity}%</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div>💨 Wind</div>
+                                    <div>${this.weatherData.wind} km/h</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div>🌡️ Pressure</div>
+                                    <div>${this.weatherData.pressure} hPa</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div>📍 Location</div>
+                                    <div>${cityName}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="prayer-card">
+                            <h3 style="text-align: center; margin-bottom: 20px;">🕌 Prayer Times</h3>
+                            <div class="prayer-times">
+                                <div class="prayer-item">
+                                    <span class="prayer-name">🌅 Fajr</span>
+                                    <span class="prayer-time">${this.prayerTimes.fajr}</span>
+                                </div>
+                                <div class="prayer-item">
+                                    <span class="prayer-name">☀️ Sunrise</span>
+                                    <span class="prayer-time">${this.prayerTimes.sunrise}</span>
+                                </div>
+                                <div class="prayer-item">
+                                    <span class="prayer-name">🌞 Dhuhr</span>
+                                    <span class="prayer-time">${this.prayerTimes.dhuhr}</span>
+                                </div>
+                                <div class="prayer-item">
+                                    <span class="prayer-name">🌤️ Asr</span>
+                                    <span class="prayer-time">${this.prayerTimes.asr}</span>
+                                </div>
+                                <div class="prayer-item">
+                                    <span class="prayer-name">🌅 Maghrib</span>
+                                    <span class="prayer-time">${this.prayerTimes.maghrib}</span>
+                                </div>
+                                <div class="prayer-item">
+                                    <span class="prayer-name">🌙 Isha</span>
+                                    <span class="prayer-time">${this.prayerTimes.isha}</span>
+                                </div>
+                            </div>
+                            ${nextPrayer ? `
+                                <div class="next-prayer">
+                                    <strong>Next Prayer: ${nextPrayer.name}</strong><br>
+                                    <span style="font-size: 1.2rem;">${nextPrayer.time}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="qibla-section">
+                        <h3>🧭 Qibla Direction</h3>
+                        <p>Direction to Kaaba from ${cityName}</p>
+                        <div class="qibla-compass">
+                            <div class="compass-directions">N</div>
+                            <div class="qibla-needle" style="transform: translate(-50%, -100%) rotate(${this.qiblaDirection}deg);"></div>
+                        </div>
+                        <p><strong>${this.qiblaDirection}° from North</strong></p>
+                        <p style="margin-top: 10px; opacity: 0.8;">
+                            ${this.selectedCity === 'Mecca,SA' ? 'You are at the Holy Kaaba! 🕋' : 'Face this direction for prayer'}
+                        </p>
+                    </div>
+                `;
+            }
+
+            getNextPrayer() {
+                const now = new Date();
+                const currentTime = now.getHours() * 60 + now.getMinutes();
+                
+                const prayers = [
+                    { name: 'Fajr', time: this.prayerTimes.fajr },
+                    { name: 'Dhuhr', time: this.prayerTimes.dhuhr },
+                    { name: 'Asr', time: this.prayerTimes.asr },
+                    { name: 'Maghrib', time: this.prayerTimes.maghrib },
+                    { name: 'Isha', time: this.prayerTimes.isha }
+                ];
+
+                for (let prayer of prayers) {
+                    const [hours, minutes] = prayer.time.split(':').map(Number);
+                    const prayerTime = hours * 60 + minutes;
+                    
+                    if (prayerTime > currentTime) {
+                        return prayer;
+                    }
+                }
+                
+                return prayers[0]; // Next day's Fajr
+            }
+
+            showError() {
+                document.getElementById('content').innerHTML = `
+                    <div class="loading">
+                        <h3>❌ Error Loading Data</h3>
+                        <p>Please check your connection and try again.</p>
+                    </div>
+                `;
+            }
+
+            startTimeUpdates() {
+                setInterval(() => {
+                    if (this.prayerTimes) {
+                        this.renderApp();
+                    }
+                }, 60000); // Update every minute
+            }
+        }
+
+        // Initialize the app when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new IslamicWeatherApp();
+        });
+    </script>
+</body>
+</html>
